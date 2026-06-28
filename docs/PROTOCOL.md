@@ -33,6 +33,28 @@ Send(msg, stream, deadline) → deadline 内按语义交付，超时则放弃
 
 ## 2. TLB 语义交付
 
+### 2.0 协议层责任边界
+
+QCP 只做传输协议层，不承载业务语义。业务层负责玩家、房间、匹配、战斗判定、登录鉴权、业务重放校验；QCP 负责把业务消息按声明的传输语义低延迟送达。
+
+| 能力 | QCP 协议层负责 | 业务层负责 |
+|------|----------------|------------|
+| 身份 | SessionID、ConnectionID、Resume Token、防重放窗口 | 玩家账号、角色 ID、房间 ID、登录态 |
+| 重连 | 0-RTT resume、序号连续性、未确认 CRITICAL/BATCH 恢复 | 是否允许玩家回到对局、状态快照补发 |
+| 切网 | PathID、多路径探测、地址迁移、主路径切换 | 是否提示玩家网络变化 |
+| 丢包 | ACK/NACK、deadline、ARQ、按需冗余、拥塞控制 | 哪类消息走 REALTIME/CRITICAL/BATCH |
+| 可靠性 | 消息级顺序、去重、去旧、交付确认 | 业务幂等、业务事务、最终状态校验 |
+| 安全 | 握手密钥、token 绑定、防重放、防伪造包 | 账号认证、权限、风控 |
+| 扩展 | TLV/extension frame、feature negotiation | 自定义 payload schema |
+
+协议层必须提供足够通用的机制，但不内置任何游戏业务概念。应用只声明：
+
+```
+Send(payload, stream, deadline, options)
+```
+
+QCP 根据 stream/deadline/path 状态决定如何发送、恢复、切换路径或放弃过期包。
+
 ### 2.1 三通道语义
 
 | Stream | 语义 | 默认机制 | 典型用途 |
@@ -160,6 +182,47 @@ KCP 是 2012 年的 legacy 协议，**不是 QCP 组件**。量化对照见 [BAS
 
 - 缓存连接参数与路径质量
 - 重连 / 切换路径时直接发送数据，无需握手等待
+
+### 5.6 生产级协议能力清单
+
+以下能力应落在协议库中，业务只通过配置和回调感知结果：
+
+| 能力 | 协议层落地要求 | 性能要求 |
+|------|----------------|----------|
+| Session Resume | Resume Token 绑定 ConnectionID、密钥 epoch、最大 seq、过期时间 | 0-RTT 恢复首包发送；无堆分配热路径 |
+| Connection Migration | 同一 SessionID 可接受 NAT 端口变化、WiFi/蜂窝地址变化 | 路径切换期间 CRITICAL 不阻塞 REALTIME |
+| Multi-Path Manager | PathID 独立 RTT/loss/jitter 统计，支持 active/probing/standby | O(路径数) 调度，路径数默认上限 4 |
+| Recovery Policy | Race、Fast NACK、ARQ、按需 Coding 可插拔 | 策略选择不进入 payload 解析热路径 |
+| Congestion Control | 每路径 pacing、拥塞窗口、丢包退避、deadline-aware 发送 | 单连接常数级状态更新 |
+| Anti-Replay | 窗口化 packet number 校验，token 与地址/密钥 epoch 绑定 | 位图窗口，避免 map 热路径 |
+| Extension Frame | TLV 扩展帧，未知扩展可跳过 | 不破坏老版本解析 |
+| Observability | RTT、P50/P99、loss、retransmit、path switch、resume latency 指标 | 指标采样可关闭，默认低开销 |
+
+推荐的最小 API 面：
+
+```go
+type SendOptions struct {
+    Stream   StreamType
+    Deadline time.Duration
+    Priority uint8
+    Flags    SendFlags
+}
+
+type SessionOptions struct {
+    ResumeToken []byte
+    MaxPaths    int
+    Features    FeatureSet
+}
+
+type PathStats struct {
+    PathID PathID
+    RTT    time.Duration
+    Loss   float64
+    State  PathState
+}
+```
+
+业务不应该手写重连、NAT 迁移、ACK/NACK、路径切换、重传队列；这些是协议层的职责。业务只根据 `OnResume`、`OnPathChange`、`OnTimeout` 等事件决定是否补状态快照或降级玩法表现。
 
 ---
 

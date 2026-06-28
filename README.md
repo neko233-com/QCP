@@ -175,6 +175,17 @@ QCP 不适合:
 4. Network Coding 仅在单路径 + burst 丢包时按需启用
 ```
 
+### 协议层边界
+
+QCP 专注协议层，不内置玩家、房间、匹配、战斗判定等业务概念。业务只声明消息的 `stream`、`deadline`、`priority`；协议负责 session resume、断线恢复、NAT/IP/端口变化后的 connection migration、多路径切换、ACK/NACK、deadline 有界重传、拥塞控制、防重放和指标采集。
+
+| 归属 | 应该负责的东西 |
+|------|----------------|
+| QCP 协议层 | SessionID / Resume Token、PathID、多路径探测、切网迁移、Fast NACK、ARQ、按需冗余、拥塞控制、防重放、P50/P99/loss 指标 |
+| 业务层 | 玩家身份、房间状态、匹配、战斗逻辑、是否补状态快照、业务幂等和权限 |
+
+详细落地建议见 [docs/PROTOCOL.md](docs/PROTOCOL.md)。
+
 ---
 
 ## FAQ
