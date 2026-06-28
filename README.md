@@ -217,12 +217,15 @@
 
 | 仓库 | 语言 | 用途 |
 |------|------|------|
-| [qcp-lib-go](https://github.com/neko233-com/qcp-lib-go) | Go | 性能验证 |
+| [qcp-lib-c](https://github.com/neko233-com/qcp-lib-c) | C | 底层/嵌入式 |
+| [qcp-lib-cpp](https://github.com/neko233-com/qcp-lib-cpp) | C++ | UE6/底层 |
 | [qcp-lib-csharp](https://github.com/neko233-com/qcp-lib-csharp) | C# | Unity |
+| [qcp-lib-rust](https://github.com/neko233-com/qcp-lib-rust) | Rust | 高性能安全 |
+| [qcp-lib-go](https://github.com/neko233-com/qcp-lib-go) | Go | 性能验证 |
+| [qcp-lib-java](https://github.com/neko233-com/qcp-lib-java) | Java | Android/服务端 |
 | [qcp-lib-lua](https://github.com/neko233-com/qcp-lib-lua) | Lua | 脚本 |
-| [qcp-lib-typescript](https://github.com/neko233-com/qcp-lib-typescript) | TypeScript | WebGL |
-| [qcp-lib-java](https://github.com/neko233-com/qcp-lib-java) | Java | Android |
-| [qcp-lib-cpp](https://github.com/neko233-com/qcp-lib-cpp) | C++ | UE6 |
+| [qcp-lib-typescript](https://github.com/neko233-com/qcp-lib-typescript) | TypeScript | WebGL/Node.js |
+| [qcp-lib-verse](https://github.com/neko233-com/qcp-lib-verse) | Verse | UE6 原生 |
 
 ### 游戏引擎
 
