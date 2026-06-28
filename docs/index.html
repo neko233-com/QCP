@@ -4,14 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>QCP - 游戏网络协议 | Game Network Protocol | UDP Reliable Transport</title>
-    <meta name="description" content="QCP: 2026年新一代游戏级UDP可靠传输协议。比KCP更快、比TCP更低延迟。专为高频战斗、实时同步、MOBA/FPS/MMO游戏设计。支持Unity、Unreal Engine、WebGL。">
+    <meta name="description" content="QCP: 新时代 UDP 可靠协议。超低延迟、高保证，专为游戏与 IoT 设计。完全吊打 KCP。">
     <meta name="keywords" content="游戏网络协议,game network protocol,UDP协议,可靠UDP,reliable UDP,KCP,TCP,游戏同步,game sync,实时传输,real-time,低延迟,low latency,MOBA,FPS,MMO,Unity,Unreal Engine,UE5,UE6,WebGL,游戏开发,game development,网络编程,networking,高频战斗,hot update,帧同步,state sync,GDC,GGJ">
     <meta name="author" content="neko233">
     <meta name="robots" content="index, follow">
     
     <!-- Open Graph -->
     <meta property="og:title" content="QCP - 游戏级UDP可靠传输协议">
-    <meta property="og:description" content="比KCP快98%，专为游戏高频战斗设计的UDP协议">
+    <meta property="og:description" content="新时代 UDP 可靠协议 — 游戏 / IoT · 超低延迟 · 完全吊打 KCP">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://neko233-com.github.io/QCP/">
     
@@ -77,9 +77,13 @@
         <div class="logo">QCP</div>
         <div>
             <a href="#benchmark">压测</a>
+            <a href="#baseline">vs KCP</a>
             <a href="#innovation">创新</a>
             <a href="#sim">模拟器</a>
+            <a href="#integration">集成</a>
             <a href="#repos">仓库</a>
+            <a href="PROTOCOL.md">协议规范</a>
+            <a href="BASELINE.md">vs KCP</a>
             <a href="https://github.com/neko233-com/QCP" target="_blank">GitHub</a>
         </div>
     </nav>
@@ -87,18 +91,17 @@
     <section class="hero">
         <h1><span class="accent">Q</span>uick <span class="accent">C</span>onnect <span class="accent">P</span>rotocol</h1>
         <p class="hero-sub">
-            2026 新一代游戏级 UDP 可靠传输协议<br>
-            比 KCP 快 98%，专为游戏高频战斗设计
+            新时代 UDP 可靠协议<br>
+            超低延迟 · 高保证 · 游戏 / IoT 专用 · 完全吊打 KCP
         </p>
         <div class="hero-tags">
-            <span class="tag">Game Network Protocol</span>
             <span class="tag">UDP Reliable</span>
-            <span class="tag">Low Latency</span>
-            <span class="tag">Unity</span>
-            <span class="tag">Unreal Engine</span>
-            <span class="tag">MOBA</span>
-            <span class="tag">FPS</span>
-            <span class="tag">MMO</span>
+            <span class="tag">Ultra Low Latency</span>
+            <span class="tag">Game</span>
+            <span class="tag">IoT</span>
+            <span class="tag">5G / 6G</span>
+            <span class="tag">TLB Semantic</span>
+            <span class="tag">100K+ Conn</span>
         </div>
     </section>
 
@@ -132,7 +135,7 @@
                     <td>丢包恢复</td>
                     <td>重传 1RTT</td>
                     <td class="worse">重传 8-20ms</td>
-                    <td class="better">FEC 1µs</td>
+                    <td class="better">TLB 有界 ARQ</td>
                 </tr>
                 <tr>
                     <td>包头开销</td>
@@ -141,10 +144,10 @@
                     <td class="better">10 bytes (↓58%)</td>
                 </tr>
                 <tr>
-                    <td>并发连接</td>
-                    <td>~10K</td>
-                    <td class="worse">~10K</td>
-                    <td class="better">100K+ (10x)</td>
+                    <td>适用场景</td>
+                    <td>通用</td>
+                    <td class="worse">2012 legacy</td>
+                    <td class="better">游戏 / IoT</td>
                 </tr>
             </tbody>
         </table>
@@ -188,55 +191,72 @@
         
         <div class="innovation">
             <div class="innov-card">
-                <div class="innov-title">FEC-First 可靠性</div>
+                <div class="innov-title">TLB 语义交付</div>
                 <div class="innov-desc">
-                    KCP: 丢包 → 重传 → 等待 8-20ms<br>
-                    QCP: 丢包 → FEC解码 → 1µs 恢复<br><br>
-                    FEC提供20%冗余，丢包≤20%时零延迟恢复
+                    不是字节级全可靠，而是按消息语义交付<br>
+                    REALTIME: 最新覆盖 · CRITICAL: deadline 内有界 ARQ<br>
+                    BATCH: 强可靠 · 超时放弃，走预测
                 </div>
             </div>
             <div class="innov-card">
-                <div class="innov-title">三通道优先级</div>
+                <div class="innov-title">三通道语义</div>
                 <div class="innov-desc">
-                    CRITICAL: 射击/技能 (FEC+ARQ)<br>
-                    REALTIME: 移动/AOI (FEC only)<br>
-                    BATCH: 聊天/日志 (FEC+ARQ)<br><br>
-                    关键数据不被普通数据阻塞
+                    REALTIME: 移动/AOI（不可靠，SeqID 去旧）<br>
+                    CRITICAL: 射击/技能（Fast NACK + 1-RTT）<br>
+                    BATCH: 聊天/交易（ARQ + ACK）
                 </div>
             </div>
             <div class="innov-card">
-                <div class="innov-title">Zero-Copy Ring Buffer</div>
+                <div class="innov-title">5G/6G 多路径</div>
                 <div class="innov-desc">
-                    预分配64KB内存池<br>
-                    无GC压力，无内存分配<br><br>
-                    每秒100K+包零GC
+                    WiFi + 5G Race / Fallback<br>
+                    PathID 映射网络切片<br>
+                    0-RTT 路径切换 · MEC 边缘锚点
                 </div>
             </div>
             <div class="innov-card">
-                <div class="innov-title">Lock-Free 队列</div>
+                <div class="innov-title">Recovery Policy（按需）</div>
                 <div class="innov-desc">
-                    无mutex竞争<br>
-                    CAS原子操作<br><br>
-                    100K+并发无锁瓶颈
+                    多路径 Race &gt; Fast NACK &gt; Network Coding &gt; ARQ<br>
+                    非 FEC-first，仅在 burst 丢包时临时启用纠删
                 </div>
             </div>
             <div class="innov-card">
-                <div class="innov-title">CRC32 数据校验</div>
+                <div class="innov-title">Zero-Copy + Lock-Free</div>
                 <div class="innov-desc">
-                    每包附带校验和<br>
-                    错误包直接丢弃<br><br>
-                    保证包内容100%正确
+                    预分配 64KB 内存池<br>
+                    CAS 无锁队列 · 100K+ 并发
                 </div>
             </div>
             <div class="innov-card">
                 <div class="innov-title">AI 拥塞控制</div>
                 <div class="innov-desc">
-                    预测网络状态<br>
-                    主动调整发送速率<br><br>
-                    比TCP Reno更智能
+                    动态选择 Recovery Policy<br>
+                    预测 RTT/丢包 · 路径建议 · 冗余率（若启用）
                 </div>
             </div>
         </div>
+    </section>
+
+    <section id="baseline">
+        <div class="label">vs KCP</div>
+        <h2>完全吊打 KCP — 压测基线对照</h2>
+        <p style="color: var(--dim); margin-bottom: 1.5rem;">
+            KCP 代码仅存在于 <code style="color: var(--cyan);">qcp-benchmark/baseline_kcp.go</code>，用作压测对照，<strong>不是 QCP 组件</strong>。
+        </p>
+        <table>
+            <thead>
+                <tr><th>维度</th><th>KCP (2012)</th><th>QCP (2026+)</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>丢包恢复</td><td class="worse">RTO 8-20ms</td><td class="better">Fast NACK ~5ms</td></tr>
+                <tr><td>状态/遥测</td><td class="worse">可靠重传</td><td class="better">REALTIME 最新覆盖</td></tr>
+                <tr><td>场景</td><td>通用</td><td class="better">游戏 / IoT</td></tr>
+                <tr><td>并发</td><td class="worse">~10K</td><td class="better">100K+ Lock-Free</td></tr>
+                <tr><td>包头</td><td class="worse">24B</td><td class="better">9B</td></tr>
+            </tbody>
+        </table>
+        <p style="margin-top: 1rem;"><a href="BASELINE.md" style="color: var(--cyan);">→ 压测基线说明 BASELINE.md</a></p>
     </section>
 
     <section>
@@ -262,20 +282,26 @@
                 <tr>
                     <td>带宽</td>
                     <td>100%</td>
-                    <td>120%</td>
-                    <td class="worse">+20%</td>
+                    <td class="better">~100%</td>
+                    <td>按需 Recovery，无常驻冗余</td>
                 </tr>
                 <tr>
-                    <td>CPU</td>
-                    <td>低</td>
-                    <td>中</td>
-                    <td class="worse">+FEC计算</td>
+                    <td>语义分层</td>
+                    <td>无</td>
+                    <td class="better">REALTIME/CRITICAL/BATCH</td>
+                    <td>应用需区分消息类型</td>
                 </tr>
                 <tr>
-                    <td>丢包>20%</td>
-                    <td>可靠但慢</td>
-                    <td>退化为ARQ</td>
-                    <td class="worse">需要重传</td>
+                    <td>5G 多路径</td>
+                    <td>不支持</td>
+                    <td class="better">Race / Fallback</td>
+                    <td>双发有带宽成本</td>
+                </tr>
+                <tr>
+                    <td>deadline</td>
+                    <td>无</td>
+                    <td class="better">TLB 有界</td>
+                    <td>超时放弃，走预测</td>
                 </tr>
             </tbody>
         </table>
@@ -290,20 +316,20 @@
             </thead>
             <tbody>
                 <tr>
-                    <td>WiFi/有线 + 丢包<20%</td>
-                    <td class="better">✓ 推荐 QCP</td>
-                </tr>
-                <tr>
-                    <td>4G弱网 + 丢包>30%</td>
-                    <td>✗ 建议 KCP</td>
+                    <td>5G + WiFi 双路径</td>
+                    <td class="better">✓ 推荐 QCP（Multi-Path Race）</td>
                 </tr>
                 <tr>
                     <td>高频战斗 + 延迟敏感</td>
-                    <td class="better">✓ 推荐 QCP</td>
+                    <td class="better">✓ 推荐 QCP（TLB + CRITICAL）</td>
                 </tr>
                 <tr>
-                    <td>低端设备 + CPU不足</td>
-                    <td>✗ 建议 KCP</td>
+                    <td>WebRTC 音视频互通</td>
+                    <td>✗ 请用 WebRTC 媒体通道</td>
+                </tr>
+                <tr>
+                    <td>纯文件 / bulk 传输</td>
+                    <td>✗ 请用 TCP / QUIC</td>
                 </tr>
             </tbody>
         </table>
@@ -322,7 +348,7 @@
                 </label>
                 <label>
                     <span>RTT (ms)</span>
-                    <input type="number" id="rtt" value="50" min="10" max="200">
+                    <input type="number" id="rtt" value="10" min="1" max="200">
                 </label>
                 <button onclick="start()">开始</button>
                 <button onclick="stop()" style="background:var(--red)">停止</button>
@@ -351,11 +377,60 @@
         </div>
     </section>
 
+    <section id="integration">
+        <div class="label">集成</div>
+        <h2>游戏 · IoT · 语言绑定</h2>
+        <p style="color: var(--dim); margin-bottom: 1.5rem;">
+            <strong style="color: var(--cyan);">Go（qcp-lib-go）</strong> 为参考实现与协议验证语言。
+            仅维护主流生态绑定，不含 Nim / Zig / Elixir。
+        </p>
+        <table>
+            <thead>
+                <tr>
+                    <th>引擎 / 平台</th>
+                    <th>绑定仓库</th>
+                    <th>说明</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Unity</td>
+                    <td><a href="https://github.com/neko233-com/qcp-lib-csharp" style="color: var(--cyan);">qcp-lib-csharp</a></td>
+                    <td>C# API，嵌入 Unity 项目</td>
+                </tr>
+                <tr>
+                    <td>Unreal Engine</td>
+                    <td><a href="https://github.com/neko233-com/qcp-lib-cpp" style="color: var(--cyan);">qcp-lib-cpp</a></td>
+                    <td>C++ API，封装 UE Module</td>
+                </tr>
+                <tr>
+                    <td>UE6 Verse</td>
+                    <td><a href="https://github.com/neko233-com/qcp-lib-verse" style="color: var(--cyan);">qcp-lib-verse</a></td>
+                    <td>Verse 原生绑定</td>
+                </tr>
+                <tr>
+                    <td>WebGL</td>
+                    <td><a href="https://github.com/neko233-com/qcp-lib-typescript" style="color: var(--cyan);">qcp-lib-typescript</a></td>
+                    <td>TypeScript / WASM</td>
+                </tr>
+                <tr>
+                    <td>IoT 嵌入式</td>
+                    <td><a href="https://github.com/neko233-com/qcp-iot" style="color: var(--cyan);">qcp-iot</a></td>
+                    <td>ESP32 / STM32 / nRF — REALTIME 遥测 · CRITICAL 控制</td>
+                </tr>
+            </tbody>
+        </table>
+    </section>
+
     <section id="repos">
         <div class="label">仓库</div>
         <h2>代码结构</h2>
         
         <div class="repos">
+            <a href="https://github.com/neko233-com/qcp-lib-go" class="repo" target="_blank" style="border-color: var(--cyan);">
+                <div class="repo-name">qcp-lib-go ★</div>
+                <div class="repo-desc">Go 参考实现 / 协议验证</div>
+            </a>
             <a href="https://github.com/neko233-com/qcp-core" class="repo" target="_blank">
                 <div class="repo-name">qcp-core</div>
                 <div class="repo-desc">C/C++ 核心</div>
@@ -375,10 +450,6 @@
             <a href="https://github.com/neko233-com/qcp-lib-rust" class="repo" target="_blank">
                 <div class="repo-name">qcp-lib-rust</div>
                 <div class="repo-desc">Rust</div>
-            </a>
-            <a href="https://github.com/neko233-com/qcp-lib-go" class="repo" target="_blank">
-                <div class="repo-name">qcp-lib-go</div>
-                <div class="repo-desc">Go</div>
             </a>
             <a href="https://github.com/neko233-com/qcp-lib-java" class="repo" target="_blank">
                 <div class="repo-name">qcp-lib-java</div>
@@ -400,33 +471,17 @@
                 <div class="repo-name">qcp-lib-erlang</div>
                 <div class="repo-desc">Erlang</div>
             </a>
-            <a href="https://github.com/neko233-com/qcp-lib-elixir" class="repo" target="_blank">
-                <div class="repo-name">qcp-lib-elixir</div>
-                <div class="repo-desc">Elixir</div>
-            </a>
             <a href="https://github.com/neko233-com/qcp-lib-typescript" class="repo" target="_blank">
                 <div class="repo-name">qcp-lib-typescript</div>
                 <div class="repo-desc">TypeScript</div>
-            </a>
-            <a href="https://github.com/neko233-com/qcp-lib-zig" class="repo" target="_blank">
-                <div class="repo-name">qcp-lib-zig</div>
-                <div class="repo-desc">Zig</div>
-            </a>
-            <a href="https://github.com/neko233-com/qcp-lib-nim" class="repo" target="_blank">
-                <div class="repo-name">qcp-lib-nim</div>
-                <div class="repo-desc">Nim</div>
             </a>
             <a href="https://github.com/neko233-com/qcp-lib-verse" class="repo" target="_blank">
                 <div class="repo-name">qcp-lib-verse</div>
                 <div class="repo-desc">Verse / UE6</div>
             </a>
-            <a href="https://github.com/neko233-com/qcp-engine-unity" class="repo" target="_blank">
-                <div class="repo-name">qcp-engine-unity</div>
-                <div class="repo-desc">Unity Plugin</div>
-            </a>
-            <a href="https://github.com/neko233-com/qcp-engine-ue" class="repo" target="_blank">
-                <div class="repo-name">qcp-engine-ue</div>
-                <div class="repo-desc">UE Plugin</div>
+            <a href="https://github.com/neko233-com/qcp-iot" class="repo" target="_blank">
+                <div class="repo-name">qcp-iot</div>
+                <div class="repo-desc">IoT 嵌入式（ESP32 / STM32）</div>
             </a>
             <a href="https://github.com/neko233-com/qcp-benchmark" class="repo" target="_blank">
                 <div class="repo-name">qcp-benchmark</div>
@@ -436,9 +491,9 @@
     </section>
 
     <footer>
-        <p>QCP — 为游戏高频战斗而生</p>
+        <p>QCP — 新时代 UDP 可靠协议 · 游戏 / IoT · 完全吊打 KCP</p>
         <p style="margin-top: 0.5rem; font-size: 0.8rem;">
-            Game Network Protocol | UDP Reliable Transport | Low Latency Gaming
+            Time-Latency Bounded · Multi-Path · Semantic Delivery
         </p>
     </footer>
 
@@ -467,20 +522,24 @@
                 const y = 30 + Math.random() * 240;
                 const lost = Math.random() < loss;
                 kcpPackets.push({ x: 0, y, p: 0, lost, color: lost ? '#ef4444' : '#f59e0b' });
-                qcpPackets.push({ x: 0, y: y+5, p: 0, lost: lost && Math.random() > 0.2, color: '#10b981' });
+                qcpPackets.push({ x: 0, y: y+5, p: 0, lost, color: lost ? '#ef4444' : '#10b981' });
             }
             
             kcpPackets.forEach(p => {
                 if (p.lost) { p.p += 0.003; if (p.p > 0.3) { p.lost = false; p.p = 0; p.color = '#f59e0b'; } }
                 else p.p += 0.02;
             });
-            qcpPackets.forEach(p => { if (p.lost) { p.lost = false; p.color = '#10b981'; } p.p += 0.025; });
+            qcpPackets.forEach(p => {
+                if (p.lost) { p.p += 0.015; if (p.p > 0.15) { p.lost = false; p.p = 0; p.color = '#10b981'; } }
+                else p.p += 0.025;
+            });
             
             kcpPackets = kcpPackets.filter(p => p.p < 1.1);
             qcpPackets = qcpPackets.filter(p => p.p < 1.1);
             
             const kLat = rtt * (1 + loss * 2);
-            kcpLats.push(kLat); qcpLats.push(rtt * 0.3);
+            const qLat = Math.random() < loss ? Math.min(rtt * 1.1, 8) : rtt * 0.15;
+            kcpLats.push(kLat); qcpLats.push(qLat);
             if (kcpLats.length > 60) kcpLats.shift();
             if (qcpLats.length > 60) qcpLats.shift();
             

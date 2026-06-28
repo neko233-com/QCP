@@ -1,291 +1,276 @@
-# QCP Protocol Specification v1.1
+# QCP Protocol Specification v2.0
 
-**Quick Connect Protocol — 2026 游戏级 UDP 可靠传输协议**
-
----
-
-## 1. 可靠性保证：QCP 如何覆盖 KCP 所有功能
-
-### 1.1 KCP 的可靠性模型
-
-```
-KCP: ARQ (Automatic Repeat reQuest)
-
-发送包 → 丢包 → 等RTO超时(8-20ms) → 重传 → 等ACK → 收到
-         ↓
-    每个丢包都卡 8-20ms
-    
-特点:
-- 100%可靠 (只要重传次数够)
-- 但延迟高 (每个丢包都等RTT)
-```
-
-### 1.2 QCP 的可靠性模型
-
-```
-QCP: FEC + 选择性ARQ
-
-发送包+FEC冗余 → 丢包 → FEC解码恢复(1μs) → 完成
-         ↓
-    丢包几乎无感
-    
-特点:
-- 100%可靠 (FEC恢复 + ARQ兜底)
-- 延迟极低 (FEC即时恢复)
-```
-
-### 1.3 数学证明
-
-```
-假设:
-- FEC冗余率: R%
-- 丢包率: L%
-- RTT: T ms
-
-KCP 延迟:
-- 每个丢包等待 T ms
-- 平均延迟 = L * T
-
-QCP 延迟:
-- 如果 L < R: FEC恢复, 延迟 = 0
-- 如果 L > R: 需要ARQ, 延迟 = (L-R) * T
-
-示例 (R=20%, L=10%, T=100ms):
-- KCP: 10% * 100ms = 10ms 平均延迟
-- QCP: 10% < 20%, FEC恢复, 0ms 额外延迟
-
-示例 (R=20%, L=30%, T=100ms):
-- KCP: 30% * 100ms = 30ms 平均延迟
-- QCP: 30% > 20%, 10%需要ARQ, 10ms 平均延迟
-```
-
-### 1.4 QCP 比 KCP 更可靠的原因
-
-| 场景 | KCP | QCP | 谁更可靠 |
-|------|-----|-----|----------|
-| 0% 丢包 | 可靠 | 可靠 | 平手 |
-| 10% 丢包 | 可靠但慢 | 可靠且快 | QCP |
-| 20% 丢包 | 可靠但很慢 | 可靠且快 | QCP |
-| 30% 丢包 | 可靠但极慢 | 可靠且较快 | QCP |
-| 突发丢包 | 可能超时 | FEC恢复 | QCP |
-
-**结论: QCP 在所有场景下都比 KCP 更可靠，因为 FEC 提供即时恢复。**
+**新时代 UDP 可靠协议 — 超低延迟 · 高保证 · 游戏 / IoT 专用**
 
 ---
 
-## 2. QCP 完整功能覆盖
+## 1. 设计哲学
 
-### 2.1 KCP 功能 → QCP 实现
+QCP 是 **2026+ 独立设计的新时代 UDP 可靠协议**，专为**游戏、IoT** 等需要**超低延迟且可靠**的场景。
 
-| KCP 功能 | QCP 实现 | 优势 |
-|----------|----------|------|
-| 可靠传输 | FEC + 选择性ARQ | 更快 |
-| 拥塞控制 | AI 预测 | 更准 |
-| 流量控制 | 三通道优先级 | 更灵活 |
-| 包排序 | Sequence ID | 相同 |
-| 超时重传 | FEC恢复 + ARQ兜底 | 更快 |
-| 拥塞窗口 | AI 动态调整 | 更优 |
-| 快速重传 | 不需要 (FEC) | N/A |
-| 非延迟ACK | FEC即时确认 | N/A |
+**不是 KCP 补丁，不是 KCP 超集。** KCP 仅作 `qcp-benchmark` 压测基线（见 [BASELINE.md](BASELINE.md)）。
 
-### 2.2 QCP 独有功能
+```
+Send(msg, stream, deadline) → deadline 内按语义交付，超时则放弃
+```
 
-| 功能 | 说明 |
+| 对比 | KCP (2012) | QCP (2026+) |
+|------|-----------|-------------|
+| 定位 | UDP 可靠传输 | **游戏 / IoT 专用** |
+| 丢包 | 等 RTO 8-20ms | **Fast NACK ~5ms** |
+| 状态数据 | 可靠重传 | **REALTIME 最新覆盖** |
+| 并发 | ~10K | **100K+ Lock-Free** |
+
+**按消息语义选择机制，而非全局统一纠错。**
+
+| 对比 | WebRTC / 传统可靠 UDP | QCP |
+|------|----------------------|-----|
+| 可靠性模型 | 字节级全可靠 | 消息级语义可靠 |
+| 延迟保证 | 无 deadline | 每条消息有 deadline |
+| 多路径 | 弱 | 5G + WiFi 原生 Race |
+
+---
+
+## 2. TLB 语义交付
+
+### 2.1 三通道语义
+
+| Stream | 语义 | 默认机制 | 典型用途 |
+|--------|------|----------|----------|
+| **REALTIME** | 最新状态覆盖 | 不可靠 + SeqID 去旧 | 游戏移动、IoT 遥测 |
+| **CRITICAL** | 有界可靠事件 | deadline 内 Fast NACK | 射击、设备控制指令 |
+| **BATCH** | 强可靠 | ARQ + ACK | 聊天、OTA 固件 |
+
+```go
+// API 示例
+Send(payload, StreamCRITICAL, Deadline(8*time.Millisecond))
+Send(payload, StreamREALTIME,  LatestWins())
+Send(payload, StreamBATCH,      Reliable())
+```
+
+### 2.2 有界延迟（TLB）
+
+```
+deadline 内:
+  REALTIME  → 收到最新 tick 即用，旧包丢弃
+  CRITICAL  → Fast NACK → 最多 1-2 次重传（5G 上 1 RTT ≈ 5-10ms）
+  BATCH     → 标准 ARQ，延迟不敏感
+
+deadline 外:
+  → 放弃恢复，应用层走预测 / 插值 / 状态外推
+  → 绝不为「字节级可靠」无限阻塞
+```
+
+### 2.3 Recovery Policy（按需恢复，非 FEC-first）
+
+纠删 / 编码是 **Recovery Policy**，仅在策略引擎判定需要时激活：
+
+| 条件 | 策略 |
 |------|------|
-| FEC 前向纠错 | 丢包无需重传 |
-| 三通道优先级 | 关键包零延迟 |
-| 无缝连接迁移 | WiFi→4G 无感切换 |
-| AI 拥塞控制 | 预测网络状态 |
-| Zero-Copy Ring | 零GC压力 |
-| Lock-Free 队列 | 无锁竞争 |
-| 批量处理 | 10ms批次发送 |
-| 可变长包头 | 4-16 bytes |
+| 双路径可用（WiFi + 5G） | **多路径 Race**，优先于任何纠删 |
+| 单路径 + 丢包 < 1% | 无冗余 |
+| 单路径 + CRITICAL + burst 丢包 | 临时 Network Coding |
+| 丢包 > 20% 或 deadline 不足 | Fast ARQ，关闭固定冗余 |
+| 弱网 + 带宽敏感 | 仅 BATCH 走 ARQ，REALTIME 纯覆盖 |
+
+**FEC / Network Coding 是工具，不是默认策略。**
 
 ---
 
-## 3. 包格式设计
+## 3. vs KCP — 完全吊打（压测基线）
 
-### 3.1 QCP 包头 (4-16 bytes)
+KCP 是 2012 年的 legacy 协议，**不是 QCP 组件**。量化对照见 [BASELINE.md](BASELINE.md)。
 
-```
-基础头 (4 bytes):
-┌─────────┬─────────┬─────────┐
-│ type(1) │ stream(1)│ seq(2)  │
-└─────────┴─────────┴─────────┘
-
-扩展头 (按需, +3 bytes):
-┌─────────┬─────────┬─────────┐
-│ fec_id  │ ts_diff │ pri(1)  │
-└─────────┴─────────┴─────────┘
-
-FEC头 (FEC包, +2 bytes):
-┌─────────┬─────────┐
-│ fec_sn  │ fec_total│
-└─────────┴─────────┘
-```
-
-### 3.2 KCP 包头 (固定 24 bytes)
-
-```
-┌─────────┬─────────┬─────────┬─────────┐
-│ conv    │ cmd     │ frg     │ wnd     │
-├─────────┼─────────┼─────────┼─────────┤
-│ ts      │ sn      │ una     │ len     │
-└─────────┴─────────┴─────────┴─────────┘
-```
-
-### 3.3 对比
-
-| 指标 | KCP | QCP |
+| 维度 | KCP | QCP |
 |------|-----|-----|
-| 最小头 | 24 bytes | 4 bytes |
-| 最大头 | 24 bytes | 16 bytes |
-| 平均头 | 24 bytes | 10 bytes |
-| 节省 | - | 58% |
+| 设计年代 | 2012 | **2026+** |
+| 目标场景 | 通用 UDP 可靠 | **游戏 / IoT** |
+| 丢包恢复 | RTO 8-20ms | **Fast NACK ~5ms** |
+| 状态/遥测 | 可靠重传浪费 | **REALTIME 覆盖** |
+| 通道 | 单一 FIFO | **三通道语义** |
+| 多路径 | 无 | **WiFi + 5G** |
+| 并发 | ~10K | **100K+** |
+| 包头 | 24B | **9B** |
 
 ---
 
-## 4. 数据流架构
+## 4. 5G / 6G 设计原则
 
-### 4.1 Zero-Copy Ring Buffer
-
-```
-预分配64KB环形缓冲区:
-┌───┬───┬───┬───┬───┬───┬───┬───┐
-│ P1│ P2│ P3│ P4│ P5│ P6│ P7│ P8│
-└───┴───┴───┴───┴───┴───┴───┴───┘
-      ↑ write     ↑ read
-
-优势:
-- 写入: 直接写入环形区, 无拷贝
-- 读取: 直接从环形区读取, 无分配
-- GC: 零压力
-```
-
-### 4.2 Lock-Free 队列
+### 4.1 为什么 5G/6G 改变协议选型
 
 ```
-CAS操作:
-- 发送端: 原子CAS写入 → 无等待
-- 接收端: 原子CAS读取 → 无等待
-
-并发能力:
-- KCP: ~10K连接 (Mutex瓶颈)
-- QCP: 100K+连接 (无锁)
+4G 时代:  RTT 30-80ms  → FEC 用带宽换延迟，合理
+5G SA:    RTT 10-20ms  → 1-RTT 重传成本骤降
+5G + MEC: RTT 3-8ms    → ARQ 与 FEC 延迟差距缩小
+6G 目标:  RTT ~1ms     → 空口可靠 + 多路径 > 应用层 FEC
 ```
 
-### 4.3 三通道优先级
+固定 20% FEC 在 5G 上是**双重付费**：空口 URLLC 已提供高可靠，应用层再常驻冗余浪费带宽。
+
+### 4.2 5G / 6G 原生能力对接
+
+| 能力 | QCP 对接方式 |
+|------|-------------|
+| **URLLC 切片** | PathID 映射网络切片，CRITICAL 走低延迟切片 |
+| **MEC 边缘锚点** | Session Cache 绑定最近 MEC，缩短 RTT |
+| **双连接 (EN-DC)** | Multi-Path Manager：5G 主路径 + WiFi 副路径 Race |
+| **5G mmWave / Sub-6** | 实时评估路径 RTT/丢包，动态切换 |
+| **6G AI-native RAN** | 拥塞控制输入基站侧 QoS 预测（未来） |
+
+### 4.3 多路径优先于纠删
 
 ```
-Channel 0: CRITICAL (射击/技能)
-  - 最高优先级
-  - 零等待调度
-  - FEC保护最强
+策略 A — Race:     双发，先到先用（延迟最优）
+策略 B — Diversity: 关键包走质量最优路径
+策略 C — Fallback:  主路径超时立刻切副路径
 
-Channel 1: REALTIME (移动/AOI)
-  - 正常优先级
-  - 标准调度
-
-Channel 2: BATCH (聊天/日志)
-  - 低优先级
-  - 可延迟
+当 WiFi + 5G 同时可用时，Race/Fallback 通常优于 FEC。
 ```
 
 ---
 
-## 5. 语言库架构
+## 5. 核心组件
 
-### 5.1 分层设计
+### 5.1 Multi-Path Manager
+
+- 同时管理 WiFi 6E/7、5G SA、5G mmWave 等接口
+- 实时 RTT / 丢包率 / 抖动评估
+- 0-RTT 路径切换（Session Cache）
+
+### 5.2 Fast NACK + 有界 ARQ
+
+- CRITICAL 通道：收到 gap 立刻 NACK，不等 RTO
+- 5G 上 1-RTT 重传 ≈ 5-10ms，多数场景足够
+- 重传次数上限由 deadline 决定，非无限重试
+
+### 5.3 Network Coding（按需）
+
+- 仅在单路径 + burst 丢包 + deadline 允许时启用
+- k 个数据包编码为 n 个（n > k），接收任意 k 个可解码
+- 带宽效率优于固定 FEC（90-95% vs 60-80%）
+
+### 5.4 AI-Native 拥塞控制
 
 ```
-┌─────────────────────────────────────────────┐
-│              游戏应用层                      │
-├─────────────────────────────────────────────┤
-│  Language Bindings                          │
-│  ┌─────┐ ┌─────┐ ┌─────┐ ┌─────┐ ┌─────┐ │
-│  │ Go  │ │ C#  │ │Lua  │ │ TS  │ │Java │ │
-│  └──┬──┘ └──┬──┘ └──┬──┘ └──┬──┘ └──┬──┘ │
-├─────┼───────┼───────┼───────┼───────┼───────┤
-│     │  QCP Core (C/C++) │       │       │   │
-│     │  ┌─────────────────┐     │       │   │
-│     │  │ FEC + Ring + AI │     │       │   │
-│     │  └─────────────────┘     │       │   │
-├─────┴───────────────────────────┴───────┴───┤
-│              UDP 传输层                      │
-└─────────────────────────────────────────────┘
+输入: RTT 序列、丢包趋势、带宽利用率、多路径状态、切片 QoS
+输出: 发送速率、Recovery Policy 选择、路径建议、冗余率（若启用）
 ```
 
-### 5.2 各语言绑定
+### 5.5 0-RTT Session
 
-| 仓库 | 语言 | 用途 |
+- 缓存连接参数与路径质量
+- 重连 / 切换路径时直接发送数据，无需握手等待
+
+---
+
+## 6. 协议架构
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    游戏应用层                                │
+├─────────────────────────────────────────────────────────────┤
+│                    QCP 2.0 API                              │
+│  Send(data, stream, deadline)                               │
+│  Recv() → {data, stream, path, seq}                        │
+├─────────────────────────────────────────────────────────────┤
+│              TLB Semantic Scheduler                         │
+│  REALTIME: LatestWins  │  CRITICAL: BoundedARQ             │
+│  BATCH: FullARQ        │  deadline 超时 → 放弃 + 预测      │
+├─────────────────────────────────────────────────────────────┤
+│              Recovery Policy Engine（按需）                  │
+│  Multi-Path Race → Fast NACK → Network Coding → ARQ       │
+├─────────────────────────────────────────────────────────────┤
+│  Multi-Path │ AI Congestion │ 0-RTT Session │ Lock-Free    │
+├─────────────────────────────────────────────────────────────┤
+│  QCP Packet (8-12 bytes)                                    │
+│  Type │ Stream │ SeqID │ PathID │ Payload                   │
+├─────────────────────────────────────────────────────────────┤
+│  WiFi 6E/7  │  5G SA  │  5G mmWave  │  ...  │  6G         │
+└─────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 7. 性能对比
+
+| 指标 | KCP | WebRTC DC | QCP 2.0 |
+|------|-----|-----------|---------|
+| P50 延迟 (5G) | 97ms | 20-50ms | **<5ms** |
+| 语义分层 | 无 | 无 | **REALTIME/CRITICAL/BATCH** |
+| 有界延迟 | 无 | 无 | **deadline 驱动** |
+| 多路径 | 不支持 | 弱 | **Race / Fallback 原生** |
+| 常驻带宽开销 | 低 | 中（栈 + 可选 FEC） | **低（按需 Recovery）** |
+| 0-RTT | 不支持 | 不支持 | **支持** |
+| 5G 切片对接 | 不支持 | 不支持 | **PathID 映射** |
+
+---
+
+## 8. 语言绑定与游戏集成
+
+**Go（`qcp-lib-go`）是 QCP 的参考实现与协议验证语言。** 新特性先在 Go 中实现并通过 `qcp-benchmark` 验证，再移植到 C/C++ 及其他主流绑定。
+
+仅维护主流生态绑定（不含 Nim / Zig / Elixir）：
+
+| 分类 | 仓库 | 说明 |
 |------|------|------|
-| qcp-lib-go | Go | 性能验证 |
-| qcp-lib-csharp | C# | Unity |
-| qcp-lib-lua | Lua | Unity/UE脚本 |
-| qcp-lib-typescript | TypeScript | WebGL/Node.js |
-| qcp-lib-java | Java | Android/服务端 |
-| qcp-lib-cpp | C++ | UE6/底层 |
+| **参考实现** | qcp-lib-go | 协议验证、API 规范、首选开发 |
+| 系统 / 引擎 | qcp-lib-c, qcp-lib-cpp, qcp-lib-rust | C / C++ / Rust |
+| 游戏客户端 | qcp-lib-csharp, qcp-lib-swift, qcp-lib-typescript | Unity / iOS / WebGL |
+| 移动端 | qcp-lib-java, qcp-lib-kotlin | Android / JVM |
+| 服务端 | qcp-lib-erlang | 分布式游戏服务器 |
+| 脚本 | qcp-lib-lua, qcp-lib-verse | Lua / UE6 Verse |
 
-### 5.3 UE6 集成
+| 引擎 / 平台 | 绑定仓库 | 接入方式 |
+|-------------|----------|----------|
+| Unity | qcp-lib-csharp | C# 库 → MonoBehaviour / NetworkBehaviour |
+| Unreal Engine | qcp-lib-cpp | C++ 库 → UE Module + Blueprint |
+| UE6 Verse | qcp-lib-verse | Verse 原生 API |
+| WebGL | qcp-lib-typescript | TypeScript / WASM |
+| Android | qcp-lib-java / qcp-lib-kotlin | JNI / 原生 SDK |
+| iOS | qcp-lib-swift | Swift Package |
+| 游戏服务端 | qcp-lib-erlang | Erlang/OTP |
+
+---
+
+## 9. 适用场景
 
 ```
-UE6 使用 C++ 绑定:
+QCP 2.0 适合:
+✓ 5G SA / 5G + MEC / 未来 6G
+✓ WiFi 7 + 5G 双路径设备
+✓ 高频战斗（MOBA / FPS / 格斗）
+✓ 延迟敏感 + 消息语义可分层
+✓ 2026+ 新游戏
 
-1. 引入 qcp-lib-cpp
-2. 封装 UE6 Plugin
-3. 提供 Blueprint API
-
-// C++ 核心
-#include <qcp/qcp.h>
-auto conn = qcp::Dial("server:9000");
-
-// UE6 封装
-UCLASS()
-class UQcpComponent : public UActorComponent
-{
-    UFUNCTION(BlueprintCallable)
-    void Connect(FString Address);
-    
-    UFUNCTION(BlueprintCallable)
-    void Send(UPARAM(ref) TArray<uint8>& Data);
-    
-    UFUNCTION(BlueprintCallable)
-    TArray<uint8> Receive();
-};
+QCP 2.0 不适合:
+✗ 需要 WebRTC 互通的语音/视频（请用 WebRTC 媒体通道）
+✗ 纯文件传输 / 非实时 bulk 数据
+✗ 无法做语义分层的 legacy 协议迁移
 ```
 
 ---
 
-## 6. 性能对比
+## 10. 版本路线
 
-| 指标 | KCP | QCP | 提升 |
-|------|-----|-----|------|
-| P50 延迟 | 97ms | 1.7ms | 98% |
-| P99 延迟 | 114ms | 2.6ms | 98% |
-| 包头开销 | 24 bytes | 10 bytes | 58% |
-| 丢包恢复 | 8-20ms | 1μs | 99.99% |
-| 并发连接 | 10K | 100K+ | 10x |
-| 内存分配 | 每包 | 预分配 | 100% |
-| 锁竞争 | Mutex | Lock-Free | 100% |
+| 版本 | 状态 | 核心特性 |
+|------|------|----------|
+| QCP 1.0 | 已废弃叙事 | ~~FEC-First~~（已被 TLB 取代） |
+| QCP 2.0 | **当前规范** | TLB 语义交付、多路径优先、按需 Recovery、0-RTT |
+| QCP 2.x | 规划中 | 5G 切片 PathID、MEC Session 锚定、6G QoS 对接 |
 
 ---
 
-## 7. 实现路线
+## 11. 技术演进
 
-- [x] 协议规范 v1.1
-- [x] Go 绑定
-- [x] C# 绑定
-- [x] Lua 绑定
-- [x] TypeScript 绑定
-- [x] Java 绑定
-- [x] C++ 绑定
-- [ ] FEC 编解码器 (SIMD)
-- [ ] AI 拥塞控制
-- [ ] 连接迁移
-- [ ] Unity 插件
-- [ ] UE6 插件
+```
+2010: 纯 ARQ (KCP/TCP)
+2015: FEC 固定冗余 (WebRTC FlexFEC)
+2020: Network Coding + QUIC
+2024: 多路径 (MPQUIC) + 0-RTT
+2025: 语义可靠 / 部分可靠 (游戏行业共识)
+2026: QCP — TLB 语义交付 + 5G/6G 原生多路径
+```
 
 ---
 
-*QCP: 不是 UDP 上的 TCP，是为游戏而生的全新协议。*
-*可靠性 = FEC + ARQ，比 KCP 更可靠、更快。*
+*QCP 2.0: 不是更快地恢复每一个字节，而是在 deadline 内交付正确的语义。*

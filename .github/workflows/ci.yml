@@ -14,4 +14,4 @@ jobs:
       - name: Verify README
         run: test -f README.md
       - name: Verify docs
-        run: test -f docs/index.html
+        run: test -f docs/index.html && test -f docs/PROTOCOL.md && test -f docs/BASELINE.md
