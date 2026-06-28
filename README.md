@@ -223,8 +223,14 @@
 | [qcp-lib-rust](https://github.com/neko233-com/qcp-lib-rust) | Rust | 高性能安全 |
 | [qcp-lib-go](https://github.com/neko233-com/qcp-lib-go) | Go | 性能验证 |
 | [qcp-lib-java](https://github.com/neko233-com/qcp-lib-java) | Java | Android/服务端 |
+| [qcp-lib-kotlin](https://github.com/neko233-com/qcp-lib-kotlin) | Kotlin | Android/JVM |
+| [qcp-lib-swift](https://github.com/neko233-com/qcp-lib-swift) | Swift | iOS/macOS |
 | [qcp-lib-lua](https://github.com/neko233-com/qcp-lib-lua) | Lua | 脚本 |
+| [qcp-lib-erlang](https://github.com/neko233-com/qcp-lib-erlang) | Erlang | 分布式服务器 |
+| [qcp-lib-elixir](https://github.com/neko233-com/qcp-lib-elixir) | Elixir | BEAM VM |
 | [qcp-lib-typescript](https://github.com/neko233-com/qcp-lib-typescript) | TypeScript | WebGL/Node.js |
+| [qcp-lib-zig](https://github.com/neko233-com/qcp-lib-zig) | Zig | 系统编程 |
+| [qcp-lib-nim](https://github.com/neko233-com/qcp-lib-nim) | Nim | 游戏脚本 |
 | [qcp-lib-verse](https://github.com/neko233-com/qcp-lib-verse) | Verse | UE6 原生 |
 
 ### 游戏引擎
