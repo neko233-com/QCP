@@ -239,6 +239,76 @@
         </div>
     </section>
 
+    <section>
+        <div class="label">诚实分析</div>
+        <h2>QCP 的代价与适用场景</h2>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th>维度</th>
+                    <th>KCP</th>
+                    <th>QCP</th>
+                    <th>QCP 代价</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>延迟</td>
+                    <td>97ms</td>
+                    <td class="better">1.7ms</td>
+                    <td>无</td>
+                </tr>
+                <tr>
+                    <td>带宽</td>
+                    <td>100%</td>
+                    <td>120%</td>
+                    <td class="worse">+20%</td>
+                </tr>
+                <tr>
+                    <td>CPU</td>
+                    <td>低</td>
+                    <td>中</td>
+                    <td class="worse">+FEC计算</td>
+                </tr>
+                <tr>
+                    <td>丢包>20%</td>
+                    <td>可靠但慢</td>
+                    <td>退化为ARQ</td>
+                    <td class="worse">需要重传</td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <h3 style="margin-top: 2rem;">适用场景</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>场景</th>
+                    <th>建议</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>WiFi/有线 + 丢包<20%</td>
+                    <td class="better">✓ 推荐 QCP</td>
+                </tr>
+                <tr>
+                    <td>4G弱网 + 丢包>30%</td>
+                    <td>✗ 建议 KCP</td>
+                </tr>
+                <tr>
+                    <td>高频战斗 + 延迟敏感</td>
+                    <td class="better">✓ 推荐 QCP</td>
+                </tr>
+                <tr>
+                    <td>低端设备 + CPU不足</td>
+                    <td>✗ 建议 KCP</td>
+                </tr>
+            </tbody>
+        </table>
+    </section>
+
     <section id="sim">
         <div class="label">模拟器</div>
         <h2>QCP vs KCP 实时对比</h2>
