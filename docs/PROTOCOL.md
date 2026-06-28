@@ -280,7 +280,7 @@ type PathStats struct {
 |------|------|------|
 | **参考实现** | qcp-lib-go | 协议验证、API 规范、首选开发 |
 | 系统 / 引擎 | qcp-lib-c, qcp-lib-cpp, qcp-lib-rust | C / C++ / Rust |
-| 游戏客户端 | qcp-unity-lib, qcp-lib-csharp, qcp-lib-swift, qcp-lib-typescript | Unity / iOS / WebGL |
+| 游戏客户端 | qcp-unity-lib, qcp-lib-csharp, qcp-lib-swift, qcp-lib-typescript | Unity / iOS / 微信小游戏 UDP / Web |
 | 移动端 | qcp-lib-java, qcp-lib-kotlin | Android / JVM |
 | 服务端 | qcp-lib-erlang | 分布式游戏服务器 |
 | 脚本 | qcp-lib-lua, qcp-lib-verse | Lua / UE6 Verse |
@@ -291,7 +291,8 @@ type PathStats struct {
 | Unity 底层绑定 | qcp-lib-csharp | C# 协议绑定 → Unity 包或自定义工程复用 |
 | Unreal Engine | qcp-lib-cpp | C++ 库 → UE Module + Blueprint |
 | UE6 Verse | qcp-lib-verse | Verse 原生 API |
-| Unity WebGL / 微信小游戏 | qcp-unity-lib | `.jslib` 平台桥；微信小游戏替换 JS 桥内部实现 |
+| Unity 微信小游戏 | qcp-unity-lib | `.jslib` 调用 `wx.createUDPSocket`；无 TCP / WebSocket 回退 |
+| 浏览器 WebGL | 不支持 QCP transport | 标准浏览器 WebGL 不开放 UDP |
 | Web / Node.js | qcp-lib-typescript | TypeScript / WASM |
 | Android | qcp-lib-java / qcp-lib-kotlin | JNI / 原生 SDK |
 | iOS | qcp-lib-swift | Swift Package |
