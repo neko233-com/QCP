@@ -395,8 +395,13 @@
             <tbody>
                 <tr>
                     <td>Unity</td>
+                    <td><a href="https://github.com/neko233-com/qcp-lib-unity" style="color: var(--cyan);">qcp-lib-unity</a></td>
+                    <td>UPM 包，原生 UDP / 微信小游戏 UDP 桥</td>
+                </tr>
+                <tr>
+                    <td>Unity 底层绑定</td>
                     <td><a href="https://github.com/neko233-com/qcp-lib-csharp" style="color: var(--cyan);">qcp-lib-csharp</a></td>
-                    <td>C# API，嵌入 Unity 项目</td>
+                    <td>C# 协议绑定，可被 Unity 包复用</td>
                 </tr>
                 <tr>
                     <td>Unreal Engine</td>
@@ -409,9 +414,14 @@
                     <td>Verse 原生绑定</td>
                 </tr>
                 <tr>
-                    <td>WebGL</td>
-                    <td><a href="https://github.com/neko233-com/qcp-lib-typescript" style="color: var(--cyan);">qcp-lib-typescript</a></td>
-                    <td>TypeScript / WASM</td>
+                    <td>Unity 微信小游戏</td>
+                    <td><a href="https://github.com/neko233-com/qcp-lib-unity" style="color: var(--cyan);">qcp-lib-unity</a></td>
+                    <td>仅支持 wx.createUDPSocket，无 TCP / WebSocket 回退</td>
+                </tr>
+                <tr>
+                    <td>浏览器 WebGL</td>
+                    <td>不支持 QCP transport</td>
+                    <td>标准浏览器 WebGL 不开放 UDP</td>
                 </tr>
                 <tr>
                     <td>IoT 嵌入式</td>
@@ -446,6 +456,10 @@
             <a href="https://github.com/neko233-com/qcp-lib-csharp" class="repo" target="_blank">
                 <div class="repo-name">qcp-lib-csharp</div>
                 <div class="repo-desc">C# / Unity</div>
+            </a>
+            <a href="https://github.com/neko233-com/qcp-lib-unity" class="repo" target="_blank">
+                <div class="repo-name">qcp-lib-unity</div>
+                <div class="repo-desc">Unity UPM / 微信小游戏 UDP</div>
             </a>
             <a href="https://github.com/neko233-com/qcp-lib-rust" class="repo" target="_blank">
                 <div class="repo-name">qcp-lib-rust</div>

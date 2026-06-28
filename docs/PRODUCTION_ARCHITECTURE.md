@@ -53,7 +53,30 @@ The business layer owns message meaning. QCP owns how the bytes are transported.
 
 ---
 
-## 3. Core Modules
+## 3. Platform Hard Limits
+
+QCP is a UDP datagram protocol. Implementations must not silently downgrade QCP to TCP or WebSocket, because that changes head-of-line blocking, pacing, packet boundary, and recovery behavior.
+
+| Platform | QCP transport | Requirement |
+|----------|---------------|-------------|
+| Native PC / mobile Unity | Native UDP | Use OS UDP socket or native plugin binding. |
+| Unity WeChat Mini Game | WeChat UDP bridge | `qcp-lib-unity` calls `wx.createUDPSocket` through `.jslib`. |
+| Browser WebGL | Unsupported | Standard browser WebGL does not expose UDP sockets. |
+| TCP / WebSocket only runtime | Unsupported | Fail fast instead of changing protocol semantics. |
+
+Mobile and mini-game implementations must assume:
+
+| Constraint | Protocol requirement |
+|------------|----------------------|
+| Small MTU / path variance | Keep payload under platform profile `MaxPayloadBytes`; prefer app-level chunking above QCP. |
+| App background / foreground switches | Resume token and path validation are protocol responsibilities. |
+| NAT rebinding / IP changes | ConnectionID and PathID must survive address changes. |
+| Loss and burst loss | REALTIME drops stale packets; CRITICAL uses deadline-aware recovery; BATCH cannot block other streams. |
+| Main-thread pressure in WebGL export | Hot path should avoid allocations and large JS<->WASM copies. |
+
+---
+
+## 4. Core Modules
 
 | Module | Responsibility | Notes |
 |--------|----------------|-------|
@@ -70,7 +93,7 @@ The business layer owns message meaning. QCP owns how the bytes are transported.
 
 ---
 
-## 4. Wire Format
+## 5. Wire Format
 
 The production header should be compact but explicit enough for migration, anti-replay, and future extension.
 

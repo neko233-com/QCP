@@ -21,6 +21,19 @@
 
 ---
 
+## 平台硬限制
+
+QCP 只服务协议层，不提供 TCP / WebSocket 回退。平台如果没有 datagram UDP 能力，就不应该伪装成 QCP。
+
+| 平台 | 支持策略 | 说明 |
+|------|----------|------|
+| Unity PC / iOS / Android | 支持 | 原生 UDP socket |
+| Unity 微信小游戏 | 支持 | 必须使用 `wx.createUDPSocket`，由 `qcp-lib-unity` 的 `.jslib` 桥接 |
+| 浏览器 WebGL | 不支持 QCP transport | 标准浏览器 WebGL 不开放 UDP |
+| TCP / WebSocket 环境 | 不支持 QCP transport | 不做协议语义降级，避免误导游戏同步链路 |
+
+---
+
 ## 压测性能对比
 
 ### QCP vs TCP vs KCP
@@ -322,7 +335,7 @@ QCP 与 WebRTC 定位不同:
 | [qcp-lib-c](https://github.com/neko233-com/qcp-lib-c) | C | 底层 / 嵌入式 |
 | [qcp-lib-cpp](https://github.com/neko233-com/qcp-lib-cpp) | C++ | UE / 底层 |
 | [qcp-lib-csharp](https://github.com/neko233-com/qcp-lib-csharp) | C# | Unity |
-| [qcp-unity-lib](https://github.com/neko233-com/qcp-unity-lib) | Unity UPM | Unity 生产接入 / 微信小游戏 UDP |
+| [qcp-lib-unity](https://github.com/neko233-com/qcp-lib-unity) | Unity UPM | Unity 生产接入 / 微信小游戏 UDP |
 | [qcp-lib-rust](https://github.com/neko233-com/qcp-lib-rust) | Rust | 高性能安全 |
 | [qcp-lib-java](https://github.com/neko233-com/qcp-lib-java) | Java | Android / 服务端 |
 | [qcp-lib-kotlin](https://github.com/neko233-com/qcp-lib-kotlin) | Kotlin | Android / JVM |
@@ -338,11 +351,11 @@ QCP 与 WebRTC 定位不同:
 
 | 引擎 | 绑定仓库 | 说明 |
 |------|----------|------|
-| Unity | [qcp-unity-lib](https://github.com/neko233-com/qcp-unity-lib) | UPM 包；封装 C# API、平台 Transport、微信小游戏 UDP `.jslib` 桥 |
+| Unity | [qcp-lib-unity](https://github.com/neko233-com/qcp-lib-unity) | UPM 包；封装 C# API、平台 Transport、微信小游戏 UDP `.jslib` 桥 |
 | Unity 底层绑定 | [qcp-lib-csharp](https://github.com/neko233-com/qcp-lib-csharp) | C# 协议绑定，可被 Unity 包复用 |
 | Unreal Engine | [qcp-lib-cpp](https://github.com/neko233-com/qcp-lib-cpp) | C++ API，可封装为 UE Module / Blueprint |
 | UE6 Verse | [qcp-lib-verse](https://github.com/neko233-com/qcp-lib-verse) | Verse 原生绑定 |
-| Unity 微信小游戏 | [qcp-unity-lib](https://github.com/neko233-com/qcp-unity-lib) | 仅支持 `wx.createUDPSocket`；无 TCP / WebSocket 回退 |
+| Unity 微信小游戏 | [qcp-lib-unity](https://github.com/neko233-com/qcp-lib-unity) | 仅支持 `wx.createUDPSocket`；无 TCP / WebSocket 回退 |
 | 浏览器 WebGL | 不支持 QCP transport | 标准浏览器 WebGL 不开放 UDP |
 | Web / Node.js | [qcp-lib-typescript](https://github.com/neko233-com/qcp-lib-typescript) | TypeScript / WebAssembly |
 

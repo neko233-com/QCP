@@ -280,18 +280,18 @@ type PathStats struct {
 |------|------|------|
 | **参考实现** | qcp-lib-go | 协议验证、API 规范、首选开发 |
 | 系统 / 引擎 | qcp-lib-c, qcp-lib-cpp, qcp-lib-rust | C / C++ / Rust |
-| 游戏客户端 | qcp-unity-lib, qcp-lib-csharp, qcp-lib-swift, qcp-lib-typescript | Unity / iOS / 微信小游戏 UDP / Web |
+| 游戏客户端 | qcp-lib-unity, qcp-lib-csharp, qcp-lib-swift, qcp-lib-typescript | Unity / iOS / 微信小游戏 UDP / Web |
 | 移动端 | qcp-lib-java, qcp-lib-kotlin | Android / JVM |
 | 服务端 | qcp-lib-erlang | 分布式游戏服务器 |
 | 脚本 | qcp-lib-lua, qcp-lib-verse | Lua / UE6 Verse |
 
 | 引擎 / 平台 | 绑定仓库 | 接入方式 |
 |-------------|----------|----------|
-| Unity | qcp-unity-lib | UPM 包 → MonoBehaviour / NetworkBehaviour / 平台 Transport |
+| Unity | qcp-lib-unity | UPM 包 → MonoBehaviour / NetworkBehaviour / 平台 Transport |
 | Unity 底层绑定 | qcp-lib-csharp | C# 协议绑定 → Unity 包或自定义工程复用 |
 | Unreal Engine | qcp-lib-cpp | C++ 库 → UE Module + Blueprint |
 | UE6 Verse | qcp-lib-verse | Verse 原生 API |
-| Unity 微信小游戏 | qcp-unity-lib | `.jslib` 调用 `wx.createUDPSocket`；无 TCP / WebSocket 回退 |
+| Unity 微信小游戏 | qcp-lib-unity | `.jslib` 调用 `wx.createUDPSocket`；无 TCP / WebSocket 回退 |
 | 浏览器 WebGL | 不支持 QCP transport | 标准浏览器 WebGL 不开放 UDP |
 | Web / Node.js | qcp-lib-typescript | TypeScript / WASM |
 | Android | qcp-lib-java / qcp-lib-kotlin | JNI / 原生 SDK |
