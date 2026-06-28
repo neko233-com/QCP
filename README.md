@@ -184,7 +184,7 @@ QCP 专注协议层，不内置玩家、房间、匹配、战斗判定等业务�
 | QCP 协议层 | SessionID / Resume Token、PathID、多路径探测、切网迁移、Fast NACK、ARQ、按需冗余、拥塞控制、防重放、P50/P99/loss 指标 |
 | 业务层 | 玩家身份、房间状态、匹配、战斗逻辑、是否补状态快照、业务幂等和权限 |
 
-详细落地建议见 [docs/PROTOCOL.md](docs/PROTOCOL.md)。
+详细落地建议见 [docs/PROTOCOL.md](docs/PROTOCOL.md)，生产级实现结构见 [docs/PRODUCTION_ARCHITECTURE.md](docs/PRODUCTION_ARCHITECTURE.md)。
 
 ---
 
@@ -349,6 +349,7 @@ QCP 与 WebRTC 定位不同:
 | 文档 | 说明 |
 |------|------|
 | [PROTOCOL.md](docs/PROTOCOL.md) | QCP 2.0 协议规范（TLB、游戏/IoT、5G/6G） |
+| [PRODUCTION_ARCHITECTURE.md](docs/PRODUCTION_ARCHITECTURE.md) | 生产级协议结构（session、path、recovery、安全、扩展、压测） |
 | [BASELINE.md](docs/BASELINE.md) | vs KCP 压测基线对照（KCP 非 QCP 组件） |
 
 **QCP 2.0** 是当前规范：TLB 语义交付为核心，Recovery Policy 按需激活。

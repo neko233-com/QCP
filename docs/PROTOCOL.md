@@ -10,6 +10,8 @@ QCP 是 **2026+ 独立设计的新时代 UDP 可靠协议**，专为**游戏、I
 
 **不是 KCP 补丁，不是 KCP 超集。** KCP 仅作 `qcp-benchmark` 压测基线（见 [BASELINE.md](BASELINE.md)）。
 
+生产级模块结构、wire format、状态机、安全、扩展和压测矩阵见 [PRODUCTION_ARCHITECTURE.md](PRODUCTION_ARCHITECTURE.md)。
+
 ```
 Send(msg, stream, deadline) → deadline 内按语义交付，超时则放弃
 ```
