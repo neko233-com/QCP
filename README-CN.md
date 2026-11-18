@@ -27,7 +27,7 @@ Go 服务之间可以通过 `qcp.ListenStream` 和 `qcp.DialStreamContext` 获�
 
 ## 网络与部署
 
-- QCP 要求两端运行环境支持 UDP，且链路允许 UDP。Go 等原生运行时可直接创建 UDP socket。标准浏览器 JavaScript 和浏览器内的 Unity WebGL 无法创建原始 UDP socket。微信小游戏的接入以平台实际开放的 UDP API 和 Unity 绑定为准。
+- QCP 要求两端运行环境支持 UDP，且链路允许 UDP。Go 等原生运行时可直接创建 UDP socket。标准浏览器 JavaScript 和浏览器内的 Unity WebGL 无法创建原始 UDP socket。Unity 包包含试验性的微信小游戏 UDP 桥接，接收路径仍待实现。浏览器端需使用平台提供的应用层传输。
 - 服务间链路优先放在私网或认证隧道里。敏感流量应在有序字节流上使用 TLS，或使用其他经过认证的加密层。启用证书校验，并限制 UDP 监听端的来源。
 - 部署时配置 UDP 转发，监控丢包、重传、超时和重连。为 UDP 受限或尾延迟退化的环境保留 WebSocket/TCP 切换配置。
 - 单条可靠有序流依然可能等待丢失的数据包。只有业务允许跳过旧更新时，最新状态交付才能减少这类等待。
@@ -50,7 +50,7 @@ Go 服务之间可以通过 `qcp.ListenStream` 和 `qcp.DialStreamContext` 获�
 | 组件 | 用途 |
 | --- | --- |
 | [qcp-lib-go](https://github.com/neko233-com/qcp-lib-go) | Go 参考实现及传输测试 |
-| [qcp-lib-unity](https://github.com/neko233-com/qcp-lib-unity) | Unity 包及微信小游戏 UDP 桥接 |
+| [qcp-lib-unity](https://github.com/neko233-com/qcp-lib-unity) | Unity 包及试验性的微信小游戏 UDP 桥接 |
 | [qcp-benchmark](https://github.com/neko233-com/qcp-benchmark) | 压测框架及模拟对比 |
 | [`.gitmodules`](.gitmodules) | 语言绑定和组件清单，各组件的完成度与互通范围以其仓库为准。 |
 
