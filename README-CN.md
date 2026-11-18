@@ -23,7 +23,7 @@ QCP 是面向低延迟应用的 UDP 传输协议，同时适用于客户端到�
 
 Go 原始传输接口提供 `Dial`、`Listen`、`Send` 和 `RecvWait`。超过 MTU 的可靠载荷会分成有序数据块。需要保留消息边界时，使用长度前缀或已有的消息帧协议。
 
-Go 服务之间可以通过 `qcp.ListenStream` 和 `qcp.DialStreamContext` 获得 `net.Listener` 和 `net.Conn`，在有序流上叠加 TLS，再复用现有 RPC 或消息帧。服务间身份认证可由两端校验证书完成。
+Go 服务之间可以通过 `qcp.ListenStream` 和 `qcp.DialStreamContext` 获得 `net.Listener` 和 `net.Conn`，在有序流上叠加 TLS，再复用现有 RPC 或消息帧。服务间身份认证可由两端校验证书完成。Go 有序流根据 ACK 和拥塞信号控制发送窗口，`qcp.ReadRecoveryStats` 提供发送端的可靠数据报与重传计数。
 
 ## 网络与部署
 

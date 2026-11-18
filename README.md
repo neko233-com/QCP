@@ -23,14 +23,14 @@ QCP is particularly useful for server-to-server links where you control both end
 
 The raw Go transport exposes `Dial`, `Listen`, `Send`, and `RecvWait`. Reliable payloads larger than the MTU arrive as ordered chunks. Applications needing message boundaries should use a length prefix or another message-framing layer.
 
-For Go server-to-server links, use `qcp.ListenStream` and `qcp.DialStreamContext` to obtain a `net.Listener` and `net.Conn`. Wrap the stream in TLS, then use your existing RPC or message framing. For service identity, require client certificates on the listener and verify the server certificate on the dialer.
+For Go server-to-server links, use `qcp.ListenStream` and `qcp.DialStreamContext` to obtain a `net.Listener` and `net.Conn`. Wrap the stream in TLS, then use your existing RPC or message framing. For service identity, require client certificates on the listener and verify the server certificate on the dialer. The Go byte stream bounds its send window using acknowledgments and congestion signals. `qcp.ReadRecoveryStats` provides reliable data and retransmission counters for the sender.
 
 ## Network and deployment considerations
 
 - QCP requires a UDP-capable runtime and a UDP path between peers. Native runtimes such as Go can open UDP sockets. Standard browser JavaScript and browser-hosted Unity WebGL have no raw UDP socket API. The Unity package includes an experimental WeChat Mini Game UDP bridge. Its receive path still needs implementation. For browser-hosted games, use the platform's supported application transport.
 - Use a private network or authenticated tunnel for backhaul. Use TLS on an ordered byte stream or another authenticated encryption layer for sensitive traffic. Keep certificate verification enabled and restrict the UDP listener to trusted networks.
 - Provision UDP forwarding and monitor loss, retransmissions, timeouts, and reconnects. Keep a WebSocket/TCP configuration available where UDP is blocked or its tail latency regresses.
-- A single reliable ordered stream can still block behind a missing packet. Latest-state delivery helps only when the application can safely skip the skipped update.
+- A single reliable ordered stream can still block behind a missing packet. Latest-state delivery helps only when the application can safely skip an update.
 
 ## Latency comparison
 
