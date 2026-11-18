@@ -1,3 +1,48 @@
+[submodule "qcp-benchmark"]
+	path = qcp-benchmark
+	url = https://github.com/neko233-com/qcp-benchmark.git
+[submodule "qcp-core"]
+	path = qcp-core
+	url = https://github.com/neko233-com/qcp-core.git
+[submodule "qcp-iot"]
+	path = qcp-iot
+	url = https://github.com/neko233-com/qcp-iot.git
+[submodule "qcp-lib-c"]
+	path = qcp-lib-c
+	url = https://github.com/neko233-com/qcp-lib-c.git
+[submodule "qcp-lib-cpp"]
+	path = qcp-lib-cpp
+	url = https://github.com/neko233-com/qcp-lib-cpp.git
+[submodule "qcp-lib-csharp"]
+	path = qcp-lib-csharp
+	url = https://github.com/neko233-com/qcp-lib-csharp.git
+[submodule "qcp-lib-erlang"]
+	path = qcp-lib-erlang
+	url = https://github.com/neko233-com/qcp-lib-erlang.git
+[submodule "qcp-lib-go"]
+	path = qcp-lib-go
+	url = https://github.com/neko233-com/qcp-lib-go.git
+[submodule "qcp-lib-java"]
+	path = qcp-lib-java
+	url = https://github.com/neko233-com/qcp-lib-java.git
+[submodule "qcp-lib-kotlin"]
+	path = qcp-lib-kotlin
+	url = https://github.com/neko233-com/qcp-lib-kotlin.git
+[submodule "qcp-lib-lua"]
+	path = qcp-lib-lua
+	url = https://github.com/neko233-com/qcp-lib-lua.git
+[submodule "qcp-lib-rust"]
+	path = qcp-lib-rust
+	url = https://github.com/neko233-com/qcp-lib-rust.git
+[submodule "qcp-lib-swift"]
+	path = qcp-lib-swift
+	url = https://github.com/neko233-com/qcp-lib-swift.git
+[submodule "qcp-lib-typescript"]
+	path = qcp-lib-typescript
+	url = https://github.com/neko233-com/qcp-lib-typescript.git
+[submodule "qcp-lib-verse"]
+	path = qcp-lib-verse
+	url = https://github.com/neko233-com/qcp-lib-verse.git
 [submodule "qcp-lib-unity"]
 	path = qcp-lib-unity
 	url = https://github.com/neko233-com/qcp-lib-unity.git
